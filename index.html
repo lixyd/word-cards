@@ -2,102 +2,301 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>单词卡 · 学与复习</title>
+<meta name="theme-color" content="#FFF9F2">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, "PingFang SC", sans-serif;
-    background: linear-gradient(170deg, #FDF6EC 0%, #FAEDE2 100%);
-    color: #4A3B32; min-height: 100vh; padding: 18px 16px 40px;
+  :root{
+    --ink:#1C1C1E; --ink-2:#6E6E73; --ink-3:#AEAEB2;
+    --accent:#E8923C; --accent-deep:#D07E2E;
+    --green:#34C759; --red:#FF3B30;
+    --glass:rgba(255,255,255,.60);
+    --glass-hi:rgba(255,255,255,.82);
+    --stroke:rgba(255,255,255,.72);
+    --card-bg:rgba(255,255,255,.78);
+    --shadow-lg:0 24px 60px rgba(140,100,60,.16), 0 4px 14px rgba(140,100,60,.08);
+    --shadow-md:0 10px 30px rgba(140,100,60,.13), 0 2px 8px rgba(140,100,60,.06);
+    --shadow-sm:0 4px 14px rgba(140,100,60,.10);
+    --r-card:30px; --r-pill:999px;
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  header { text-align: center; margin-bottom: 14px; }
-  h1 { font-size: 20px; font-weight: 600; }
-  .sub { font-size: 12.5px; color: #A08D7E; margin-top: 4px; }
-  .modes { display: flex; gap: 8px; justify-content: center; margin: 14px 0; }
-  .mode {
-    border: 1.5px solid #EAC7B2; background: #fff; color: #8A6B55;
-    font-size: 13.5px; padding: 7px 18px; border-radius: 999px; cursor: pointer;
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Segoe UI",sans-serif;
+    color:var(--ink); min-height:100vh; overflow-x:hidden;
+    padding-bottom:env(safe-area-inset-bottom);
+    background:
+      radial-gradient(1100px 640px at 8% -8%, rgba(255,255,255,.92), transparent 62%),
+      radial-gradient(900px 560px at 96% 4%, rgba(255,222,190,.72), transparent 58%),
+      radial-gradient(820px 520px at 50% 108%, rgba(230,240,252,.72), transparent 60%),
+      linear-gradient(168deg,#FFF9F2 0%,#FDF2E7 34%,#F6F1FA 72%,#EFF4FB 100%);
+    background-attachment:fixed;
   }
-  .mode.on { background: #F2A65A; border-color: #F2A65A; color: #fff; }
-  .stats { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat { background: #FFF3E4; border-radius: 10px; padding: 8px 14px; text-align: center; min-width: 88px; }
-  .stat b { display: block; font-size: 18px; font-weight: 600; }
-  .stat span { font-size: 11.5px; color: #A08D7E; }
-  .stylebar { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
-  .sbtn { border: 1px solid #EAC7B2; background: #fff; color: #8A6B55; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
-  .sbtn.on { background: #EAF3DE; border-color: #97C459; color: #3B6D11; }
+  #scene{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+  .wrap{position:relative; z-index:1; max-width:820px; margin:0 auto; padding:0 18px 56px;}
 
-  .stage { display: flex; flex-direction: column; align-items: center; }
-  .scene { perspective: 1200px; width: 300px; height: 400px; }
-  .card { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.4,.2,.2,1); cursor: pointer; }
-  .card.flipped { transform: rotateY(180deg); }
-  .face {
-    position: absolute; inset: 0; border-radius: 26px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-    background: #FFFDF9; box-shadow: 0 18px 44px rgba(120,90,60,.16), 0 4px 12px rgba(120,90,60,.09);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+  /* ── 顶部：标题 + 悬浮半透明分段控件 ───────────────── */
+  .brand{padding:calc(env(safe-area-inset-top) + 22px) 0 4px; text-align:center;}
+  .brand h1{
+    font-size:26px; font-weight:700; letter-spacing:.2px;
+    background:linear-gradient(96deg,#D07E2E,#B0643C 52%,#8A6BB8);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .face.back { transform: rotateY(180deg); background: #FFF9F0; }
-  .face img { width: 220px; height: 220px; object-fit: contain; background: #FFF6EA; border-radius: 18px; }
-  .word { font-size: 32px; font-weight: 700; margin-top: 14px; letter-spacing: .5px; }
-  .ipa { font-size: 15px; color: #B08A6E; margin-top: 4px; }
-  .speak {
-    margin-top: 14px; border: none; background: #F2A65A; color: #fff;
-    font-size: 15px; font-weight: 600; padding: 10px 26px; border-radius: 999px; cursor: pointer;
-  }
-  .speak:hover { background: #E08F3F; }
-  .back-zh { font-size: 30px; font-weight: 600; }
-  .back-pos { font-size: 13px; color: #B08A6E; margin-top: 2px; }
-  .back-ex { font-size: 13.5px; color: #7A6553; margin-top: 16px; line-height: 1.7; text-align: center; padding: 0 8px; }
-  .back-ex em { display: block; color: #A08D7E; font-style: normal; font-size: 12.5px; margin-top: 2px; }
-  .hint { font-size: 12px; color: #C4AC97; margin-top: 12px; }
+  .brand .sub{font-size:12.5px; color:var(--ink-3); margin-top:5px; font-weight:500;}
 
-  .actions { display: flex; gap: 14px; margin-top: 20px; }
-  .act { border: none; font-size: 15px; font-weight: 600; padding: 12px 30px; border-radius: 999px; cursor: pointer; }
-  .act.no { background: #fff; color: #C96F4A; border: 2px solid #EAC7B2; }
-  .act.yes { background: #7FB77E; color: #fff; box-shadow: 0 6px 14px rgba(127,183,126,.32); }
-
-  .quiz-img { width: 200px; height: 200px; object-fit: contain; background: #FFF6EA; border-radius: 18px; }
-  .quiz-word { font-size: 26px; font-weight: 700; margin: 12px 0 4px; }
-  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; width: 300px; }
-  .opt {
-    border: 1.5px solid #EAC7B2; background: #fff; color: #5A4636; font-size: 15px;
-    padding: 12px 6px; border-radius: 12px; cursor: pointer; font-weight: 500;
+  .seg-dock{position:sticky; top:calc(env(safe-area-inset-top) + 10px); z-index:50;
+    display:flex; justify-content:center; padding:10px 0 6px; margin:0 -18px;}
+  .seg-dock::before{content:""; position:absolute; inset:0;
+    background:linear-gradient(to bottom, rgba(255,249,242,.92) 55%, rgba(255,249,242,0));
+    pointer-events:none;}
+  .seg{
+    position:relative; display:flex; gap:2px; padding:4px;
+    background:var(--glass); -webkit-backdrop-filter:blur(22px) saturate(1.8);
+    backdrop-filter:blur(22px) saturate(1.8);
+    border:1px solid var(--stroke); border-radius:var(--r-pill);
+    box-shadow:var(--shadow-md);
   }
-  .opt.right { background: #EAF3DE; border-color: #97C459; color: #3B6D11; }
-  .opt.wrong { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; }
-  .panel { background: #FFFDF9; border: .5px solid #EFE2D4; border-radius: 20px; padding: 20px; text-align: center; }
-  .empty { font-size: 14px; color: #A08D7E; line-height: 1.8; }
-  .big { font-size: 40px; margin-bottom: 8px; }
-  .catrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
-  .cat { border: 1px solid #EAC7B2; background: #fff; color: #8A6B55; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
-  .cat.on { background: #F2A65A; border-color: #F2A65A; color: #fff; }
-  #search { display: block; width: min(320px, 90%); margin: 0 auto 12px; padding: 9px 16px; border: 1.5px solid #EAC7B2; border-radius: 999px; font-size: 14px; outline: none; }
-  .grid { display: grid; width: 100%; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
-  .gitem { background: #FFFDF9; border: .5px solid #EFE2D4; border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; }
-  .gitem img { width: 64px; height: 64px; object-fit: contain; }
-  .gitem .en { font-size: 13px; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .gitem .zh { font-size: 11.5px; color: #B08A6E; }
-  .hide { display: none !important; }
+  .seg button{
+    position:relative; z-index:2; border:none; background:none; cursor:pointer;
+    font-family:inherit; font-size:14px; font-weight:600; color:var(--ink-2);
+    padding:9px 26px; border-radius:var(--r-pill); transition:color .28s ease;
+    -webkit-user-select:none; user-select:none;
+  }
+  .seg button.on{color:#fff;}
+  .seg .thumb{
+    position:absolute; z-index:1; top:4px; bottom:4px; border-radius:var(--r-pill);
+    background:linear-gradient(135deg,#F0A45C,#E08A38);
+    box-shadow:0 4px 12px rgba(224,138,56,.42);
+    transition:transform .34s cubic-bezier(.34,1.3,.4,1), width .34s cubic-bezier(.34,1.3,.4,1);
+  }
+
+  /* ── 统计卡 ─────────────────────────────────────────── */
+  .stats{display:flex; gap:10px; justify-content:center; margin:16px 0 4px;}
+  .stat{
+    min-width:104px; padding:12px 16px 11px; text-align:center;
+    background:var(--glass); -webkit-backdrop-filter:blur(18px) saturate(1.6);
+    backdrop-filter:blur(18px) saturate(1.6);
+    border:1px solid var(--stroke); border-radius:20px; box-shadow:var(--shadow-sm);
+  }
+  .stat b{display:block; font-size:22px; font-weight:700; letter-spacing:.3px;
+    font-variant-numeric:tabular-nums;}
+  .stat b.hi{color:var(--accent-deep);}
+  .stat span{font-size:11.5px; color:var(--ink-3); font-weight:500;}
+
+  /* ── 分类筛选（可收起）───────────────────────────────── */
+  .catbox{max-width:560px; margin:14px auto 0;}
+  .cat-toggle{
+    display:flex; align-items:center; gap:8px; margin:0 auto; cursor:pointer;
+    font-family:inherit; font-size:13px; font-weight:600; color:var(--ink-2);
+    padding:9px 18px; border-radius:var(--r-pill);
+    background:var(--glass); -webkit-backdrop-filter:blur(16px);
+    backdrop-filter:blur(16px); border:1px solid var(--stroke);
+    box-shadow:var(--shadow-sm); transition:transform .2s ease;
+  }
+  .cat-toggle:active{transform:scale(.96);}
+  .cat-toggle b{color:var(--accent-deep); font-weight:700;}
+  .cat-toggle .chev{width:14px; height:14px; fill:none; stroke:currentColor;
+    stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;
+    transition:transform .3s ease;}
+  .catbox.open .chev{transform:rotate(180deg);}
+  .cat-chips{overflow:hidden; max-height:0; opacity:0;
+    transition:max-height .38s cubic-bezier(.3,.8,.3,1), opacity .28s ease, margin .3s ease;}
+  .catbox.open .cat-chips{max-height:260px; opacity:1; margin-top:12px;}
+  .catrow{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding:0 4px;}
+  .chip{
+    border:1px solid rgba(255,255,255,.8); background:var(--glass);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    color:var(--ink-2); font-size:12.5px; font-weight:600; padding:7px 15px;
+    border-radius:var(--r-pill); cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:transform .18s ease, background .2s ease, color .2s ease;
+  }
+  .chip:active{transform:scale(.94);}
+  .chip.on{background:linear-gradient(135deg,#F0A45C,#E08A38); color:#fff;
+    border-color:transparent; box-shadow:0 4px 12px rgba(224,138,56,.38);}
+
+  /* ── 舞台与卡片 ─────────────────────────────────────── */
+  .stage{display:flex; flex-direction:column; align-items:center; margin-top:22px;}
+  .scene{perspective:1400px; width:min(340px,88vw); height:452px;}
+  .tilt{width:100%; height:100%; transition:transform .5s cubic-bezier(.2,.8,.2,1);
+    transform-style:preserve-3d;}
+  .card{position:relative; width:100%; height:100%; cursor:pointer;
+    transform-style:preserve-3d;
+    transition:transform .72s cubic-bezier(.36,1.18,.32,1);}
+  .card.flipped{transform:rotateY(180deg) scale(1.012);}
+  .face{
+    position:absolute; inset:0; border-radius:var(--r-card);
+    -webkit-backface-visibility:hidden; backface-visibility:hidden;
+    background:var(--card-bg);
+    -webkit-backdrop-filter:blur(24px) saturate(1.7); backdrop-filter:blur(24px) saturate(1.7);
+    border:1px solid var(--stroke);
+    box-shadow:var(--shadow-lg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:26px 24px; overflow:hidden;
+  }
+  .face::after{content:""; position:absolute; inset:0; border-radius:inherit;
+    background:linear-gradient(155deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 34%);
+    pointer-events:none;}
+  .face.back{transform:rotateY(180deg);
+    background:linear-gradient(170deg, rgba(255,251,246,.92), rgba(255,240,229,.88));
+    -webkit-backdrop-filter:blur(24px) saturate(1.7); backdrop-filter:blur(24px) saturate(1.7);}
+
+  .imgbox{width:186px; height:186px; border-radius:26px; display:flex;
+    align-items:center; justify-content:center; position:relative;
+    background:radial-gradient(circle at 50% 38%, #FFFFFF 0%, #FFF4E6 100%);
+    box-shadow:inset 0 0 0 1px rgba(224,138,56,.10), 0 8px 22px rgba(140,100,60,.10);}
+  .imgbox img{width:158px; height:158px; object-fit:contain;
+    filter:drop-shadow(0 10px 14px rgba(120,90,50,.16));}
+  .idx{position:absolute; top:14px; right:16px; font-size:11.5px; font-weight:600;
+    color:var(--ink-3); font-variant-numeric:tabular-nums;}
+  .word{font-size:34px; font-weight:700; margin-top:18px; letter-spacing:.2px;}
+  .ipa{margin-top:7px; font-size:14px; color:var(--ink-2); font-weight:500;
+    padding:4px 13px; border-radius:var(--r-pill);
+    background:rgba(232,146,60,.10); border:1px solid rgba(232,146,60,.16);}
+  .say{
+    margin-top:16px; display:flex; align-items:center; gap:8px; cursor:pointer;
+    border:none; font-family:inherit; font-size:14.5px; font-weight:600; color:#fff;
+    padding:11px 26px; border-radius:var(--r-pill);
+    background:linear-gradient(135deg,#F0A45C,#E08A38);
+    box-shadow:0 6px 16px rgba(224,138,56,.42);
+    transition:transform .18s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .say:hover{filter:brightness(1.04);}
+  .say:active{transform:scale(.95); box-shadow:0 3px 9px rgba(224,138,56,.34);}
+  .hint{font-size:12px; color:var(--ink-3); margin-top:14px; font-weight:500;}
+
+  /* 背面 */
+  .back-zh{font-size:40px; font-weight:700; letter-spacing:1px;}
+  .back-tags{display:flex; gap:8px; margin-top:12px;}
+  .tag{font-size:12px; font-weight:600; color:var(--ink-2); padding:5px 13px;
+    border-radius:var(--r-pill); background:rgba(255,255,255,.72);
+    border:1px solid rgba(255,255,255,.85); box-shadow:var(--shadow-sm);}
+  .tag.acc{color:var(--accent-deep); background:rgba(232,146,60,.12);
+    border-color:rgba(232,146,60,.18);}
+  .back-ex{
+    margin-top:20px; width:100%; padding:15px 18px; border-radius:20px;
+    background:rgba(255,255,255,.66); border:1px solid rgba(255,255,255,.85);
+    box-shadow:var(--shadow-sm); text-align:center;}
+  .back-ex .en{font-size:14.5px; color:var(--ink); line-height:1.65; font-weight:500;}
+  .back-ex .zh{display:block; font-size:12.5px; color:var(--ink-3); margin-top:5px;}
+  .back-audio{margin-top:18px;}
+
+  /* ── 操作按钮 ───────────────────────────────────────── */
+  .actions{display:flex; gap:12px; margin-top:22px;}
+  .act{
+    border:none; font-family:inherit; font-size:15px; font-weight:600;
+    padding:14px 30px; border-radius:var(--r-pill); cursor:pointer;
+    transition:transform .18s ease, box-shadow .22s ease, filter .2s ease;
+  }
+  .act:active{transform:scale(.95);}
+  .act.no{
+    color:var(--red); background:var(--glass);
+    -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    border:1px solid rgba(255,59,48,.22); box-shadow:var(--shadow-sm);}
+  .act.no:hover{background:rgba(255,59,48,.07);}
+  .act.yes{
+    color:#fff; background:linear-gradient(135deg,#4CD964,#2FB350);
+    box-shadow:0 8px 20px rgba(52,199,89,.36);}
+  .act.yes:hover{filter:brightness(1.05);}
+
+  /* ── 复习（看图选词）────────────────────────────────── */
+  .quiz-tag{font-size:12.5px; color:var(--ink-3); font-weight:600; margin-bottom:14px;}
+  .quiz-img{
+    width:210px; height:210px; object-fit:contain; padding:18px; cursor:pointer;
+    border-radius:28px; background:radial-gradient(circle at 50% 36%, #FFFFFF 0%, #FFF4E6 100%);
+    box-shadow:var(--shadow-md), inset 0 0 0 1px rgba(224,138,56,.10);
+    transition:transform .3s ease;}
+  .quiz-img:active{transform:scale(.97);}
+  .quiz-word{font-size:22px; font-weight:700; margin:18px 0 2px;}
+  .options{display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-top:16px;
+    width:min(340px,88vw);}
+  .opt{
+    border:1px solid var(--stroke); background:var(--glass);
+    -webkit-backdrop-filter:blur(16px) saturate(1.5); backdrop-filter:blur(16px) saturate(1.5);
+    color:var(--ink); font-family:inherit; font-size:15px; font-weight:600;
+    padding:14px 8px; border-radius:18px; cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:transform .16s ease, background .22s ease, color .22s ease, border-color .22s ease;}
+  .opt:active{transform:scale(.96);}
+  .opt.right{background:linear-gradient(135deg,rgba(76,217,100,.16),rgba(47,179,80,.12));
+    border-color:rgba(52,199,89,.42); color:#1E7E33;}
+  .opt.wrong{background:linear-gradient(135deg,rgba(255,59,48,.12),rgba(255,59,48,.07));
+    border-color:rgba(255,59,48,.36); color:#B22A22;}
+
+  /* ── 图库 ───────────────────────────────────────────── */
+  .searchbox{position:relative; width:min(400px,92%); margin:0 auto;}
+  .searchbox svg{position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    width:15px; height:15px; fill:none; stroke:var(--ink-3); stroke-width:2.2;
+    stroke-linecap:round;}
+  #search{
+    width:100%; padding:12px 18px 12px 40px; font-family:inherit; font-size:14.5px;
+    color:var(--ink); outline:none; border:1px solid var(--stroke);
+    border-radius:var(--r-pill); background:var(--glass);
+    -webkit-backdrop-filter:blur(18px) saturate(1.6); backdrop-filter:blur(18px) saturate(1.6);
+    box-shadow:var(--shadow-sm); transition:box-shadow .2s ease, border-color .2s ease;}
+  #search::placeholder{color:var(--ink-3);}
+  #search:focus{border-color:rgba(232,146,60,.42); box-shadow:0 0 0 4px rgba(232,146,60,.12);}
+  .grid{display:grid; width:100%; grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
+    gap:12px; margin-top:18px;}
+  .gitem{
+    background:var(--card-bg); -webkit-backdrop-filter:blur(18px) saturate(1.5);
+    backdrop-filter:blur(18px) saturate(1.5);
+    border:1px solid var(--stroke); border-radius:22px; padding:14px 8px 11px;
+    text-align:center; cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:transform .26s cubic-bezier(.3,1.2,.4,1), box-shadow .26s ease;}
+  .gitem:hover{transform:translateY(-4px); box-shadow:var(--shadow-md);}
+  .gitem:active{transform:scale(.96);}
+  .gitem img{width:62px; height:62px; object-fit:contain;
+    filter:drop-shadow(0 5px 8px rgba(120,90,50,.13));}
+  .gitem .en{font-size:13px; font-weight:600; margin-top:8px; color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .gitem .zh{font-size:11.5px; color:var(--ink-3); margin-top:2px; font-weight:500;}
+
+  /* ── 空状态面板 ─────────────────────────────────────── */
+  .panel{
+    width:min(360px,90vw); padding:30px 26px; text-align:center;
+    background:var(--card-bg); -webkit-backdrop-filter:blur(20px) saturate(1.6);
+    backdrop-filter:blur(20px) saturate(1.6);
+    border:1px solid var(--stroke); border-radius:28px; box-shadow:var(--shadow-md);}
+  .panel .big{font-size:42px;}
+  .empty{font-size:14px; color:var(--ink-2); line-height:1.85; margin-top:10px; font-weight:500;}
+
+  .hide{display:none !important;}
+  @media (max-width:480px){
+    .seg button{padding:9px 18px; font-size:13.5px;}
+    .stat{min-width:92px; padding:10px 12px;}
+    .stat b{font-size:19px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important; animation-duration:.01ms !important;}
+  }
 </style>
 </head>
 <body>
+<canvas id="scene"></canvas>
 <div class="wrap">
-  <header>
+
+  <header class="brand">
     <h1>单词卡 · 学与复习</h1>
     <div class="sub" id="subtitle">图 → 音 → 义 · 不带语法</div>
   </header>
 
-  <div class="modes">
-    <button class="mode on" data-mode="learn">学习新词</button>
-    <button class="mode" data-mode="review">复习</button>
-    <button class="mode" data-mode="browse">图库</button>
+  <div class="seg-dock">
+    <div class="seg" id="seg">
+      <span class="thumb" id="segThumb"></span>
+      <button data-mode="learn" class="on">学习新词</button>
+      <button data-mode="review">复习</button>
+      <button data-mode="browse">图库</button>
+    </div>
   </div>
 
   <div class="stats" id="stats"></div>
 
-  <div id="catrow" class="catrow"></div>
+  <div class="catbox" id="catbox">
+    <button class="cat-toggle" id="catToggle">
+      分类 <b id="catCur">全部</b>
+      <svg class="chev" viewBox="0 0 16 16"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg>
+    </button>
+    <div class="cat-chips"><div class="catrow" id="catrow"></div></div>
+  </div>
 
   <div class="stage" id="stage"></div>
 </div>
@@ -133,11 +332,10 @@ const AUDIO_SOURCES = [
   t => "audio-kokoro-trim/" + encodeURIComponent(t) + ".m4a",
   t => "audio/" + encodeURIComponent(t) + ".mp3"
 ];
-const srcCache = {};            // 记住每个词哪个源可用，避免重复试错
+const srcCache = {};
 function tryPlay(text, si) {
   if (si >= AUDIO_SOURCES.length) return ttsFallback(text);
-  const url = AUDIO_SOURCES[si](text);
-  const a = new Audio(url);
+  const a = new Audio(AUDIO_SOURCES[si](text));
   a.play().then(() => { srcCache[text] = si; }).catch(() => tryPlay(text, si + 1));
 }
 function speak(text, e) {
@@ -151,30 +349,62 @@ function ttsFallback(text) {
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
-if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => {};
+
+/* ── 分段控件 ─────────────────────────────────────── */
+const segEl = document.getElementById("seg");
+const segThumb = document.getElementById("segThumb");
+function moveThumb() {
+  const on = segEl.querySelector("button.on");
+  if (!on) return;
+  segThumb.style.width = on.offsetWidth + "px";
+  segThumb.style.transform = `translateX(${on.offsetLeft - 4}px)`;
+}
+segEl.querySelectorAll("button").forEach(b => b.onclick = () => {
+  if (mode === b.dataset.mode) return;
+  mode = b.dataset.mode;
+  segEl.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  moveThumb();
+  render();
+});
+addEventListener("resize", moveThumb);
+
+/* ── 分类收起/展开 ─────────────────────────────────── */
+const catbox = document.getElementById("catbox");
+const catOpen = localStorage.getItem("vocab_cat_open") === "1";
+document.getElementById("catToggle").onclick = () => {
+  const open = catbox.classList.toggle("open");
+  localStorage.setItem("vocab_cat_open", open ? "1" : "0");
+};
 
 function renderStats() {
-  const p = progress;
-  const learned = Object.keys(p).length;
-  const mastered = Object.values(p).filter(x => x.box >= 5).length;
+  const learned = Object.keys(progress).length;
+  const mastered = Object.values(progress).filter(x => x.box >= 5).length;
   const due = dueWords().length;
   document.getElementById("stats").innerHTML =
-    `<div class="stat"><b>${learned}</b><span>已学 / ${DATA.length}</span></div>` +
+    `<div class="stat"><b class="hi">${learned}</b><span>已学 / ${DATA.length}</span></div>` +
     `<div class="stat"><b>${due}</b><span>待复习</span></div>` +
     `<div class="stat"><b>${mastered}</b><span>已掌握</span></div>`;
 }
 
 function renderCatRow() {
+  const box = document.getElementById("catbox");
+  if (mode !== "learn") { box.classList.add("hide"); return; }
+  box.classList.remove("hide");
+  box.classList.toggle("open", localStorage.getItem("vocab_cat_open") === "1");
+  document.getElementById("catCur").textContent = curCat;
+  let html = `<button class="chip ${curCat === "全部" ? "on" : ""}" data-cat="全部">全部</button>`;
+  html += CATS.map(c => `<button class="chip ${curCat === c ? "on" : ""}" data-cat="${c}">${c}</button>`).join("");
   const row = document.getElementById("catrow");
-  if (mode !== "learn") { row.classList.add("hide"); return; }
-  row.classList.remove("hide");
-  const leftover = DATA.filter(d => !progress[d.w]).length;
-  let html = `<button class="cat ${curCat === "全部" ? "on" : ""}" data-cat="全部">全部</button>`;
-  html += CATS.map(c => `<button class="cat ${curCat === c ? "on" : ""}" data-cat="${c}">${c}</button>`).join("");
   row.innerHTML = html;
-  row.querySelectorAll(".cat").forEach(b => b.onclick = () => { curCat = b.dataset.cat; startLearn(); });
+  row.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    curCat = b.dataset.cat;
+    document.getElementById("catCur").textContent = curCat;
+    row.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b));
+    startLearn();
+  });
 }
 
+/* ── 学习 ─────────────────────────────────────────── */
 function startLearn() {
   const pool = DATA.filter(d => (curCat === "全部" || d.cat === curCat) && boxOf(d.w) === 0);
   queue = pool.slice(0, 10);
@@ -187,30 +417,52 @@ function startLearn() {
   renderCard();
 }
 
+function esc(s) { return String(s).replace(/'/g, "\\'"); }
+
 function renderCard() {
   const d = queue[qi];
   flipped = false;
   document.getElementById("stage").innerHTML = `
-    <div class="scene"><div class="card" id="card" onclick="flip()">
+    <div class="scene"><div class="tilt" id="tilt"><div class="card" id="card" onclick="flip()">
       <div class="face front">
-        <img src="${imgSrc(d)}" alt="${d.w}">
+        <span class="idx">${qi + 1} / ${queue.length}</span>
+        <div class="imgbox"><img src="${imgSrc(d)}" alt="${d.w}"></div>
         <div class="word">${d.w}</div>
         <div class="ipa">${d.ipa || ""}</div>
-        <button class="speak" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">🔊 听发音</button>
+        <button class="say" onclick="speak('${esc(d.w)}', event)">🔈 听发音</button>
       </div>
       <div class="face back">
         <div class="back-zh">${d.zh}</div>
-        <div class="back-pos">${d.pos || ""} · ${d.cat || ""}</div>
-        ${d.ex ? `<div class="back-ex">${d.ex}<em>${d.exZh || ""}</em></div>` : ""}
-        <button class="speak" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">🔊 再听一遍</button>
+        <div class="back-tags">
+          <span class="tag acc">${d.w}</span>
+          ${d.pos ? `<span class="tag">${d.pos}</span>` : ""}
+          ${d.cat ? `<span class="tag">${d.cat}</span>` : ""}
+        </div>
+        ${d.ex ? `<div class="back-ex"><div class="en">${d.ex}</div><span class="zh">${d.exZh || ""}</span></div>` : ""}
+        <button class="say back-audio" onclick="speak('${esc(d.w)}', event)">🔈 再听一遍</button>
       </div>
-    </div></div>
-    <div class="hint">点击卡片翻面看中文 · ${qi + 1} / ${queue.length}</div>
+    </div></div></div>
+    <div class="hint">点击卡片翻面看中文 · 例句也会一并出现</div>
     <div class="actions">
       <button class="act no" onclick="answer(false)">还不认识</button>
       <button class="act yes" onclick="answer(true)">记住了 ✓</button>
     </div>`;
+  bindTilt();
   speak(d.w);
+}
+
+/* 轻微 3D 倾斜（桌面端） */
+function bindTilt() {
+  const tilt = document.getElementById("tilt");
+  const scene = tilt.parentElement;
+  if (matchMedia("(hover:none)").matches) return;
+  scene.addEventListener("pointermove", e => {
+    const r = scene.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5;
+    const y = (e.clientY - r.top) / r.height - .5;
+    tilt.style.transform = `rotateY(${x * 9}deg) rotateX(${-y * 9}deg)`;
+  });
+  scene.addEventListener("pointerleave", () => { tilt.style.transform = ""; });
 }
 
 function flip() { document.getElementById("card").classList.toggle("flipped"); }
@@ -239,11 +491,12 @@ function finishSession() {
   document.getElementById("stage").innerHTML = `<div class="panel"><div class="big">✅</div>
     <div class="empty">本轮完成！<br>新学 ${sessionNew} 个 · 记住 ${sessionRight} 次 · 反复 ${sessionWrong} 次<br>
     错词已进入复习队列（5 分钟后到期）</div>
-    <div class="actions" style="justify-content:center">
+    <div class="actions" style="justify-content:center;margin-top:18px">
       <button class="act yes" onclick="startLearn()">再来一组</button>
     </div></div>`;
 }
 
+/* ── 复习 ─────────────────────────────────────────── */
 function startReview() {
   queue = dueWords().slice(0, 12);
   if (!queue.length) {
@@ -263,10 +516,10 @@ function renderQuiz() {
   const opts = [d, ...picks].sort(() => Math.random() - .5);
   quiz = d;
   document.getElementById("stage").innerHTML = `
-    <div class="hint" style="margin-bottom:12px">看图选词 · ${qi + 1} / ${queue.length}</div>
-    <img class="quiz-img" src="${imgSrc(d)}" alt="quiz" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">
+    <div class="quiz-tag">看图选词 · ${qi + 1} / ${queue.length}</div>
+    <img class="quiz-img" src="${imgSrc(d)}" alt="quiz" onclick="speak('${esc(d.w)}', event)">
     <div class="quiz-word">这个词是？</div>
-    <button class="speak" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">🔊 听发音</button>
+    <button class="say" onclick="speak('${esc(d.w)}', event)">🔈 听发音</button>
     <div class="options" id="opts">
       ${opts.map(o => `<button class="opt" data-w="${o.w}">${o.w}</button>`).join("")}
     </div>`;
@@ -286,18 +539,22 @@ function pick(btn) {
   setTimeout(() => { qi++; qi >= queue.length ? (renderStats(), startReview()) : renderQuiz(); }, right ? 550 : 1200);
 }
 
+/* ── 图库 ─────────────────────────────────────────── */
 function renderBrowse() {
   const list = DATA.filter(d => !curQ ||
     d.w.toLowerCase().includes(curQ) || (d.zh || "").includes(curQ));
   document.getElementById("stage").innerHTML = `
-    <input id="search" placeholder="搜索英文或中文…" value="${curQ}">
-    <div class="hint" style="margin-bottom:12px">共 ${list.length} 个词</div>
+    <div class="searchbox">
+      <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6"/><path d="M10.5 10.5L14 14"/></svg>
+      <input id="search" placeholder="搜索英文或中文…" value="${curQ}">
+    </div>
+    <div class="hint" style="margin-top:12px">共 ${list.length} 个词</div>
     <div class="grid">${list.slice(0, 200).map(d => `
-      <div class="gitem" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">
-        <img src="${imgSrc(d)}" alt="${d.w}">
+      <div class="gitem" onclick="speak('${esc(d.w)}', event)">
+        <img src="${imgSrc(d)}" alt="${d.w}" loading="lazy">
         <div class="en">${d.w}</div><div class="zh">${d.zh}</div>
       </div>`).join("")}</div>
-    <div class="hint" style="margin-top:12px">点击任意卡片听发音</div>`;
+    <div class="hint" style="margin-top:16px">点击任意卡片听发音</div>`;
   const s = document.getElementById("search");
   s.oninput = e => { curQ = e.target.value.trim().toLowerCase(); renderBrowse(); s.focus(); };
 }
@@ -309,26 +566,21 @@ function render() {
   else renderBrowse();
 }
 
-document.querySelectorAll(".mode").forEach(b => b.onclick = () => {
-  mode = b.dataset.mode;
-  document.querySelectorAll(".mode").forEach(x => x.classList.remove("on"));
-  b.classList.add("on");
-  render();
-});
-
 fetch("words.json").then(r => r.json()).then(d => {
   DATA = d;
   CATS = [...new Set(d.map(x => x.cat).filter(Boolean))];
   document.getElementById("subtitle").textContent =
     `${DATA.length} 个词 · 图 → 音 → 义 · 错词循环 + 间隔复习`;
-  document.getElementById("catrow").innerHTML = "";
   const m = new URLSearchParams(location.search).get("mode");
   if (m && ["learn", "review", "browse"].includes(m)) {
     mode = m;
-    document.querySelectorAll(".mode").forEach(x => x.classList.toggle("on", x.dataset.mode === m));
+    document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("on", x.dataset.mode === m));
   }
+  moveThumb();
   render();
 });
 </script>
+<script src="three.min.js"></script>
+<script src="bg-particles.js"></script>
 </body>
 </html>
