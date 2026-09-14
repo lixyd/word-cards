@@ -52,7 +52,7 @@
   .back-home svg{width:13px; height:13px; fill:none; stroke:currentColor;
     stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;}
 
-
+  /* ── 顶部：标题 + 悬浮半透明分段控件 ───────────────── */
   .brand{padding:calc(env(safe-area-inset-top) + 22px) 0 4px; text-align:center;}
   .brand h1{
     font-size:26px; font-weight:700; letter-spacing:.2px;
@@ -86,6 +86,52 @@
     box-shadow:0 4px 12px rgba(224,138,56,.42);
     transition:transform .34s cubic-bezier(.34,1.3,.4,1), width .34s cubic-bezier(.34,1.3,.4,1);
   }
+
+  /* ── 音色选择 ───────────────────────────────────────── */
+  .voice-dock{display:flex; justify-content:center; margin-top:10px; position:relative; z-index:45;}
+  .voice-pick{
+    display:flex; align-items:center; gap:7px; cursor:pointer;
+    font-family:inherit; font-size:13px; font-weight:600; color:var(--ink-2);
+    padding:8px 16px; border-radius:var(--r-pill);
+    background:var(--glass); -webkit-backdrop-filter:blur(18px) saturate(1.6);
+    backdrop-filter:blur(18px) saturate(1.6);
+    border:1px solid var(--stroke); box-shadow:var(--shadow-sm);
+    transition:transform .18s ease, background .2s ease;}
+  .voice-pick:hover{background:var(--glass-hi);}
+  .voice-pick:active{transform:scale(.96);}
+  .voice-pick .dot{width:7px; height:7px; border-radius:50%;
+    background:linear-gradient(135deg,#F0A45C,#E08A38);
+    box-shadow:0 0 6px rgba(224,138,56,.6);}
+  .voice-pick .chev{width:12px; height:12px; fill:none; stroke:currentColor;
+    stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;
+    transition:transform .3s ease;}
+  .voice-dock.open .chev{transform:rotate(180deg);}
+  .voice-pop{
+    position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%) scale(.94);
+    transform-origin:top center; opacity:0; pointer-events:none;
+    min-width:240px; padding:8px; border-radius:22px;
+    background:rgba(255,252,247,.88); -webkit-backdrop-filter:blur(28px) saturate(1.8);
+    backdrop-filter:blur(28px) saturate(1.8);
+    border:1px solid var(--stroke); box-shadow:var(--shadow-lg);
+    transition:opacity .22s ease, transform .26s cubic-bezier(.3,1.2,.4,1);}
+  .voice-dock.open .voice-pop{opacity:1; pointer-events:auto; transform:translateX(-50%) scale(1);}
+  .voice-it{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    border:none; background:none; cursor:pointer; font-family:inherit;
+    padding:10px 14px; border-radius:16px; transition:background .18s ease;}
+  .voice-it:hover{background:rgba(232,146,60,.10);}
+  .voice-it .nm{font-size:13.5px; font-weight:600; color:var(--ink);}
+  .voice-it .ds{font-size:11.5px; color:var(--ink-3); font-weight:500; margin-top:1px;}
+  .voice-it .ck{margin-left:auto; width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; flex:none;
+    background:linear-gradient(135deg,#F0A45C,#E08A38); opacity:0; transform:scale(.6);
+    transition:opacity .2s ease, transform .2s ease;}
+  .voice-it.on .ck{opacity:1; transform:scale(1);}
+  .voice-it .ck svg{width:9px; height:9px; fill:none; stroke:#fff; stroke-width:2.6;
+    stroke-linecap:round; stroke-linejoin:round;}
+  .voice-it .pct{margin-left:auto; font-size:11px; color:var(--ink-3); font-weight:600;
+    font-variant-numeric:tabular-nums;}
+  .voice-it.on .pct{display:none;}
 
   /* ── 统计卡 ─────────────────────────────────────────── */
   .stats{display:flex; gap:10px; justify-content:center; margin:16px 0 4px;}
@@ -308,6 +354,15 @@
     </div>
   </div>
 
+  <div class="voice-dock" id="voiceDock" style="display:none">
+    <button class="voice-pick" id="voicePick">
+      <span class="dot"></span>
+      <span id="voiceCur">音色</span>
+      <svg class="chev" viewBox="0 0 16 16"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg>
+    </button>
+    <div class="voice-pop" id="voicePop"></div>
+  </div>
+
   <div class="stats" id="stats"></div>
 
   <div class="catbox" id="catbox">
@@ -324,7 +379,6 @@
 <script>
 const BOX_MIN = [0, 5, 1440, 4320, 10080, 21600];  // 1..5 级间隔（分钟）：5分 / 1天 / 3天 / 7天 / 15天
 const LS_KEY = "vocab_app_progress_v1";
-let DATA = [], CATS = [], mode = "learn", curCat = "全部", curQ = "";
 let queue = [], qi = 0, sessionNew = 0, sessionRight = 0, sessionWrong = 0, flipped = false, quiz = null;
 
 function loadProgress() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } }
@@ -347,20 +401,35 @@ function imgSrc(d) {
   return o.noto || o.orig || o["3d"] || "";
 }
 
-// 音源优先级：Kokoro af_heart（已消静音）→ Kokoro 原版 → 真人词典音 → 浏览器 TTS
-const AUDIO_SOURCES = [
-  t => "audio-kokoro-trim/" + encodeURIComponent(t) + ".m4a",
-  t => "audio/" + encodeURIComponent(t) + ".mp3"
-];
+// 音源优先级：选定音色（OmniVoice）→ Kokoro af_heart（已消静音）→ Kokoro 原版 → 真人词典音 → 浏览器 TTS
+let VOICES = [];                     // [{key,name,desc,count,complete}] 顺序即展示顺序
+let curVoice = localStorage.getItem("vocab_voice") || "";
+const VOICE_ORDER = ["neighbor", "librarian", "documentarian", "helpdesk", "captain"];
+let IDX = {};                        // word -> index（OmniVoice 文件名带序号）
+let DATA = [], CATS = [], mode = "learn", curCat = "全部", curQ = "";
+
+function audioSources(text) {
+  const list = [];
+  if (curVoice && IDX[text] !== undefined) {
+    list.push(t => "audio-ov/" + curVoice + "/" + String(IDX[t]).padStart(4, "0") + "_" +
+      t.replace(/ /g, "_").replace(/\//g, "_") + ".m4a");
+  }
+  list.push(
+    t => "audio-kokoro-trim/" + encodeURIComponent(t) + ".m4a",
+    t => "audio/" + encodeURIComponent(t) + ".mp3"
+  );
+  return list;
+}
 const srcCache = {};
-function tryPlay(text, si) {
-  if (si >= AUDIO_SOURCES.length) return ttsFallback(text);
-  const a = new Audio(AUDIO_SOURCES[si](text));
-  a.play().then(() => { srcCache[text] = si; }).catch(() => tryPlay(text, si + 1));
+function tryPlay(text, si, list) {
+  if (si >= list.length) return ttsFallback(text);
+  const a = new Audio(list[si](text));
+  a.play().then(() => { srcCache[curVoice + "|" + text] = si; }).catch(() => tryPlay(text, si + 1, list));
 }
 function speak(text, e) {
   if (e) e.stopPropagation();
-  tryPlay(text, srcCache[text] || 0);
+  const list = audioSources(text);
+  tryPlay(text, srcCache[curVoice + "|" + text] || 0, list);
 }
 function ttsFallback(text) {
   if (!window.speechSynthesis) return;
@@ -387,6 +456,44 @@ segEl.querySelectorAll("button").forEach(b => b.onclick = () => {
   render();
 });
 addEventListener("resize", moveThumb);
+
+/* ── 音色选择 ─────────────────────────────────────── */
+const voiceDock = document.getElementById("voiceDock");
+function renderVoicePop() {
+  const pop = document.getElementById("voicePop");
+  pop.innerHTML = VOICES.map(v => `
+    <button class="voice-it ${v.key === curVoice ? "on" : ""}" data-v="${v.key}">
+      <span><span class="nm">${v.name}</span><br><span class="ds">${v.desc || ""}</span></span>
+      ${v.complete ? `<span class="ck"><svg viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5"/></svg></span>`
+                   : `<span class="pct">${v.count || 0}</span>`}
+    </button>`).join("");
+  pop.querySelectorAll(".voice-it").forEach(b => b.onclick = () => {
+    curVoice = b.dataset.v;
+    localStorage.setItem("vocab_voice", curVoice);
+    document.getElementById("voiceCur").textContent =
+      (VOICES.find(v => v.key === curVoice) || {}).name || "音色";
+    voiceDock.classList.remove("open");
+    renderVoicePop();
+  });
+}
+document.getElementById("voicePick").onclick = e => {
+  e.stopPropagation();
+  voiceDock.classList.toggle("open");
+};
+document.addEventListener("click", e => {
+  if (!voiceDock.contains(e.target)) voiceDock.classList.remove("open");
+});
+function loadVoices() {
+  fetch("audio-ov/voices.json").then(r => r.json()).then(m => {
+    VOICES = VOICE_ORDER.filter(k => m[k]).map(k => ({ key: k, ...m[k] }));
+    if (!VOICES.length) return;
+    if (!VOICES.some(v => v.key === curVoice)) curVoice = VOICES[0].key;
+    document.getElementById("voiceCur").textContent =
+      (VOICES.find(v => v.key === curVoice) || {}).name || "音色";
+    voiceDock.style.display = "flex";
+    renderVoicePop();
+  }).catch(() => {});
+}
 
 /* ── 分类收起/展开 ─────────────────────────────────── */
 const catbox = document.getElementById("catbox");
@@ -592,7 +699,9 @@ fetch("words.json").then(r => r.json()).then(d => {
     document.getElementById("backHome").classList.add("show");
   }
   DATA = d;
+  IDX = {}; d.forEach((x, i) => { IDX[x.w] = i; });
   CATS = [...new Set(d.map(x => x.cat).filter(Boolean))];
+  loadVoices();
   document.getElementById("subtitle").textContent =
     `${DATA.length} 个词 · 图 → 音 → 义 · 错词循环 + 间隔复习`;
   const m = new URLSearchParams(location.search).get("mode");

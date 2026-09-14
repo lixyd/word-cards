@@ -1,0 +1,9 @@
+{
+ "neighbor": {
+  "name": "The Neighbor",
+  "desc": "美音 · 年轻女声",
+  "instruct": "female, young adult, moderate pitch, american accent",
+  "count": 1101,
+  "complete": false
+ }
+}
