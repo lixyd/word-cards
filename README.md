@@ -2,7 +2,8 @@
 
 一张卡片三个信息：**图 → 音 → 义**。1202 个高频具象名词，每词一张配图、一个真人级发音、一个音标，**不带语法、不背拼写**，像小时候认卡片那样认单词。纯前端实现，无需安装、无需联网（打开后全部资源本地加载）。
 
-**在线使用**：<https://xiaobaiai.asia/word-cards/>
+**在线使用（主入口）**：<https://xiaobaiai.asia/cards/>
+**GitHub Pages 镜像**：<https://lixyd.github.io/word-cards/>（本仓库，无返回主页按钮）
 
 ## 功能
 
