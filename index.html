@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单词卡 · 学与复习</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", sans-serif;
+    background: linear-gradient(170deg, #FDF6EC 0%, #FAEDE2 100%);
+    color: #4A3B32; min-height: 100vh; padding: 18px 16px 40px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: 20px; font-weight: 600; }
+  .sub { font-size: 12.5px; color: #A08D7E; margin-top: 4px; }
+  .modes { display: flex; gap: 8px; justify-content: center; margin: 14px 0; }
+  .mode {
+    border: 1.5px solid #EAC7B2; background: #fff; color: #8A6B55;
+    font-size: 13.5px; padding: 7px 18px; border-radius: 999px; cursor: pointer;
+  }
+  .mode.on { background: #F2A65A; border-color: #F2A65A; color: #fff; }
+  .stats { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: #FFF3E4; border-radius: 10px; padding: 8px 14px; text-align: center; min-width: 88px; }
+  .stat b { display: block; font-size: 18px; font-weight: 600; }
+  .stat span { font-size: 11.5px; color: #A08D7E; }
+  .stylebar { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
+  .sbtn { border: 1px solid #EAC7B2; background: #fff; color: #8A6B55; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .sbtn.on { background: #EAF3DE; border-color: #97C459; color: #3B6D11; }
+
+  .stage { display: flex; flex-direction: column; align-items: center; }
+  .scene { perspective: 1200px; width: 300px; height: 400px; }
+  .card { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.4,.2,.2,1); cursor: pointer; }
+  .card.flipped { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0; border-radius: 26px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    background: #FFFDF9; box-shadow: 0 18px 44px rgba(120,90,60,.16), 0 4px 12px rgba(120,90,60,.09);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+  }
+  .face.back { transform: rotateY(180deg); background: #FFF9F0; }
+  .face img { width: 220px; height: 220px; object-fit: contain; background: #FFF6EA; border-radius: 18px; }
+  .word { font-size: 32px; font-weight: 700; margin-top: 14px; letter-spacing: .5px; }
+  .ipa { font-size: 15px; color: #B08A6E; margin-top: 4px; }
+  .speak {
+    margin-top: 14px; border: none; background: #F2A65A; color: #fff;
+    font-size: 15px; font-weight: 600; padding: 10px 26px; border-radius: 999px; cursor: pointer;
+  }
+  .speak:hover { background: #E08F3F; }
+  .back-zh { font-size: 30px; font-weight: 600; }
+  .back-pos { font-size: 13px; color: #B08A6E; margin-top: 2px; }
+  .back-ex { font-size: 13.5px; color: #7A6553; margin-top: 16px; line-height: 1.7; text-align: center; padding: 0 8px; }
+  .back-ex em { display: block; color: #A08D7E; font-style: normal; font-size: 12.5px; margin-top: 2px; }
+  .hint { font-size: 12px; color: #C4AC97; margin-top: 12px; }
+
+  .actions { display: flex; gap: 14px; margin-top: 20px; }
+  .act { border: none; font-size: 15px; font-weight: 600; padding: 12px 30px; border-radius: 999px; cursor: pointer; }
+  .act.no { background: #fff; color: #C96F4A; border: 2px solid #EAC7B2; }
+  .act.yes { background: #7FB77E; color: #fff; box-shadow: 0 6px 14px rgba(127,183,126,.32); }
+
+  .quiz-img { width: 200px; height: 200px; object-fit: contain; background: #FFF6EA; border-radius: 18px; }
+  .quiz-word { font-size: 26px; font-weight: 700; margin: 12px 0 4px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; width: 300px; }
+  .opt {
+    border: 1.5px solid #EAC7B2; background: #fff; color: #5A4636; font-size: 15px;
+    padding: 12px 6px; border-radius: 12px; cursor: pointer; font-weight: 500;
+  }
+  .opt.right { background: #EAF3DE; border-color: #97C459; color: #3B6D11; }
+  .opt.wrong { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; }
+  .panel { background: #FFFDF9; border: .5px solid #EFE2D4; border-radius: 20px; padding: 20px; text-align: center; }
+  .empty { font-size: 14px; color: #A08D7E; line-height: 1.8; }
+  .big { font-size: 40px; margin-bottom: 8px; }
+  .catrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
+  .cat { border: 1px solid #EAC7B2; background: #fff; color: #8A6B55; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .cat.on { background: #F2A65A; border-color: #F2A65A; color: #fff; }
+  #search { display: block; width: min(320px, 90%); margin: 0 auto 12px; padding: 9px 16px; border: 1.5px solid #EAC7B2; border-radius: 999px; font-size: 14px; outline: none; }
+  .grid { display: grid; width: 100%; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+  .gitem { background: #FFFDF9; border: .5px solid #EFE2D4; border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; }
+  .gitem img { width: 64px; height: 64px; object-fit: contain; }
+  .gitem .en { font-size: 13px; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gitem .zh { font-size: 11.5px; color: #B08A6E; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>单词卡 · 学与复习</h1>
+    <div class="sub" id="subtitle">图 → 音 → 义 · 不带语法</div>
+  </header>
+
+  <div class="modes">
+    <button class="mode on" data-mode="learn">学习新词</button>
+    <button class="mode" data-mode="review">复习</button>
+    <button class="mode" data-mode="browse">图库</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div id="catrow" class="catrow"></div>
+
+  <div class="stage" id="stage"></div>
+</div>
+
+<script>
+const BOX_MIN = [0, 5, 1440, 4320, 10080, 21600];  // 1..5 级间隔（分钟）：5分 / 1天 / 3天 / 7天 / 15天
+const LS_KEY = "vocab_app_progress_v1";
+let DATA = [], CATS = [], mode = "learn", curCat = "全部", curQ = "";
+let queue = [], qi = 0, sessionNew = 0, sessionRight = 0, sessionWrong = 0, flipped = false, quiz = null;
+
+function loadProgress() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } }
+function saveProgress(p) { localStorage.setItem(LS_KEY, JSON.stringify(p)); }
+let progress = loadProgress();
+
+const now = () => Date.now();
+function boxOf(w) { return progress[w] ? progress[w].box : 0; }
+function dueWords() {
+  const t = now();
+  return DATA.filter(d => {
+    const p = progress[d.w];
+    if (!p) return false;
+    if (p.box >= 5) return false;
+    return t - p.ts >= BOX_MIN[p.box] * 60000;
+  });
+}
+function imgSrc(d) {
+  const o = d.img || {};
+  return o.noto || o.orig || o["3d"] || "";
+}
+
+// 音源优先级：Kokoro af_heart（已消静音）→ Kokoro 原版 → 真人词典音 → 浏览器 TTS
+const AUDIO_SOURCES = [
+  t => "audio-kokoro-trim/" + encodeURIComponent(t) + ".m4a",
+  t => "audio/" + encodeURIComponent(t) + ".mp3"
+];
+const srcCache = {};            // 记住每个词哪个源可用，避免重复试错
+function tryPlay(text, si) {
+  if (si >= AUDIO_SOURCES.length) return ttsFallback(text);
+  const url = AUDIO_SOURCES[si](text);
+  const a = new Audio(url);
+  a.play().then(() => { srcCache[text] = si; }).catch(() => tryPlay(text, si + 1));
+}
+function speak(text, e) {
+  if (e) e.stopPropagation();
+  tryPlay(text, srcCache[text] || 0);
+}
+function ttsFallback(text) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US"; u.rate = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => {};
+
+function renderStats() {
+  const p = progress;
+  const learned = Object.keys(p).length;
+  const mastered = Object.values(p).filter(x => x.box >= 5).length;
+  const due = dueWords().length;
+  document.getElementById("stats").innerHTML =
+    `<div class="stat"><b>${learned}</b><span>已学 / ${DATA.length}</span></div>` +
+    `<div class="stat"><b>${due}</b><span>待复习</span></div>` +
+    `<div class="stat"><b>${mastered}</b><span>已掌握</span></div>`;
+}
+
+function renderCatRow() {
+  const row = document.getElementById("catrow");
+  if (mode !== "learn") { row.classList.add("hide"); return; }
+  row.classList.remove("hide");
+  const leftover = DATA.filter(d => !progress[d.w]).length;
+  let html = `<button class="cat ${curCat === "全部" ? "on" : ""}" data-cat="全部">全部</button>`;
+  html += CATS.map(c => `<button class="cat ${curCat === c ? "on" : ""}" data-cat="${c}">${c}</button>`).join("");
+  row.innerHTML = html;
+  row.querySelectorAll(".cat").forEach(b => b.onclick = () => { curCat = b.dataset.cat; startLearn(); });
+}
+
+function startLearn() {
+  const pool = DATA.filter(d => (curCat === "全部" || d.cat === curCat) && boxOf(d.w) === 0);
+  queue = pool.slice(0, 10);
+  qi = 0; sessionNew = queue.length; sessionRight = 0; sessionWrong = 0;
+  if (!queue.length) {
+    document.getElementById("stage").innerHTML = `<div class="panel"><div class="big">🎉</div>
+      <div class="empty">这个分类的新词都学完啦<br>去「复习」巩固，或换个分类继续</div></div>`;
+    return;
+  }
+  renderCard();
+}
+
+function renderCard() {
+  const d = queue[qi];
+  flipped = false;
+  document.getElementById("stage").innerHTML = `
+    <div class="scene"><div class="card" id="card" onclick="flip()">
+      <div class="face front">
+        <img src="${imgSrc(d)}" alt="${d.w}">
+        <div class="word">${d.w}</div>
+        <div class="ipa">${d.ipa || ""}</div>
+        <button class="speak" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">🔊 听发音</button>
+      </div>
+      <div class="face back">
+        <div class="back-zh">${d.zh}</div>
+        <div class="back-pos">${d.pos || ""} · ${d.cat || ""}</div>
+        ${d.ex ? `<div class="back-ex">${d.ex}<em>${d.exZh || ""}</em></div>` : ""}
+        <button class="speak" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">🔊 再听一遍</button>
+      </div>
+    </div></div>
+    <div class="hint">点击卡片翻面看中文 · ${qi + 1} / ${queue.length}</div>
+    <div class="actions">
+      <button class="act no" onclick="answer(false)">还不认识</button>
+      <button class="act yes" onclick="answer(true)">记住了 ✓</button>
+    </div>`;
+  speak(d.w);
+}
+
+function flip() { document.getElementById("card").classList.toggle("flipped"); }
+
+function answer(known) {
+  const d = queue[qi];
+  const p = progress[d.w] || { box: 0, ts: now() };
+  if (known) {
+    p.box = Math.min(5, Math.max(1, p.box + 1));
+    sessionRight++;
+  } else {
+    p.box = 1;
+    sessionWrong++;
+    queue.push(d);                       // 错词本轮末尾再现
+  }
+  p.ts = now();
+  progress[d.w] = p;
+  saveProgress(progress);
+  qi++;
+  if (qi >= queue.length) return finishSession();
+  renderCard();
+}
+
+function finishSession() {
+  renderStats();
+  document.getElementById("stage").innerHTML = `<div class="panel"><div class="big">✅</div>
+    <div class="empty">本轮完成！<br>新学 ${sessionNew} 个 · 记住 ${sessionRight} 次 · 反复 ${sessionWrong} 次<br>
+    错词已进入复习队列（5 分钟后到期）</div>
+    <div class="actions" style="justify-content:center">
+      <button class="act yes" onclick="startLearn()">再来一组</button>
+    </div></div>`;
+}
+
+function startReview() {
+  queue = dueWords().slice(0, 12);
+  if (!queue.length) {
+    document.getElementById("stage").innerHTML = `<div class="panel"><div class="big">🌿</div>
+      <div class="empty">暂无到期需要复习的词<br>学几个新词后再回来（错词 5 分钟后就会到期）</div></div>`;
+    return;
+  }
+  qi = 0;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const d = queue[qi];
+  const sameCat = DATA.filter(x => x.cat === d.cat && x.w !== d.w);
+  const pool = (sameCat.length >= 3 ? sameCat : DATA.filter(x => x.w !== d.w));
+  const picks = pool.sort(() => Math.random() - .5).slice(0, 3);
+  const opts = [d, ...picks].sort(() => Math.random() - .5);
+  quiz = d;
+  document.getElementById("stage").innerHTML = `
+    <div class="hint" style="margin-bottom:12px">看图选词 · ${qi + 1} / ${queue.length}</div>
+    <img class="quiz-img" src="${imgSrc(d)}" alt="quiz" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">
+    <div class="quiz-word">这个词是？</div>
+    <button class="speak" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">🔊 听发音</button>
+    <div class="options" id="opts">
+      ${opts.map(o => `<button class="opt" data-w="${o.w}">${o.w}</button>`).join("")}
+    </div>`;
+  document.querySelectorAll(".opt").forEach(b => b.onclick = () => pick(b));
+}
+
+function pick(btn) {
+  const d = quiz, right = btn.dataset.w === d.w;
+  const p = progress[d.w] || { box: 1, ts: now() };
+  if (right) {
+    p.box = Math.min(5, p.box + 1); btn.classList.add("right");
+  } else {
+    p.box = 1; btn.classList.add("wrong");
+    document.querySelectorAll(".opt").forEach(b => { if (b.dataset.w === d.w) b.classList.add("right"); });
+  }
+  p.ts = now(); progress[d.w] = p; saveProgress(progress);
+  setTimeout(() => { qi++; qi >= queue.length ? (renderStats(), startReview()) : renderQuiz(); }, right ? 550 : 1200);
+}
+
+function renderBrowse() {
+  const list = DATA.filter(d => !curQ ||
+    d.w.toLowerCase().includes(curQ) || (d.zh || "").includes(curQ));
+  document.getElementById("stage").innerHTML = `
+    <input id="search" placeholder="搜索英文或中文…" value="${curQ}">
+    <div class="hint" style="margin-bottom:12px">共 ${list.length} 个词</div>
+    <div class="grid">${list.slice(0, 200).map(d => `
+      <div class="gitem" onclick="speak('${d.w.replace(/'/g, "\\'")}', event)">
+        <img src="${imgSrc(d)}" alt="${d.w}">
+        <div class="en">${d.w}</div><div class="zh">${d.zh}</div>
+      </div>`).join("")}</div>
+    <div class="hint" style="margin-top:12px">点击任意卡片听发音</div>`;
+  const s = document.getElementById("search");
+  s.oninput = e => { curQ = e.target.value.trim().toLowerCase(); renderBrowse(); s.focus(); };
+}
+
+function render() {
+  renderStats(); renderCatRow();
+  if (mode === "learn") startLearn();
+  else if (mode === "review") startReview();
+  else renderBrowse();
+}
+
+document.querySelectorAll(".mode").forEach(b => b.onclick = () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll(".mode").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  render();
+});
+
+fetch("words.json").then(r => r.json()).then(d => {
+  DATA = d;
+  CATS = [...new Set(d.map(x => x.cat).filter(Boolean))];
+  document.getElementById("subtitle").textContent =
+    `${DATA.length} 个词 · 图 → 音 → 义 · 错词循环 + 间隔复习`;
+  document.getElementById("catrow").innerHTML = "";
+  const m = new URLSearchParams(location.search).get("mode");
+  if (m && ["learn", "review", "browse"].includes(m)) {
+    mode = m;
+    document.querySelectorAll(".mode").forEach(x => x.classList.toggle("on", x.dataset.mode === m));
+  }
+  render();
+});
+</script>
+</body>
+</html>
